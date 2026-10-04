@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CAPhet AI Bot Arena - 1,000-Bot Stacking Arena</title>
+<style>
+  :root {
+    --bg-dark: #07080c;
+    --card-bg: #0f121b;
+    --border: #1e2436;
+    --accent: #ef4444;
+    --accent-gold: #f59e0b;
+    --cyan: #06b6d4;
+    --green: #10b981;
+    --floor-color: #ffffff;
+    --coin-primary: #dc2626;
+    --coin-rim: #991b1b;
+    --coin-highlight: #f87171;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --font-mono: 'SF Mono', Monaco, 'Fira Code', Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    user-select: none;
+  }
+  header {
+    background: #0b0e17;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    z-index: 50;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-badge {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+    font-weight: 800;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+  }
+  .brand h1 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .brand span.sub {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: normal;
+  }
+
+  .mode-switch-group {
+    display: flex;
+    align-items: center;
+    background: #111522;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 4px;
+  }
+  .mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+  }
+  .mode-btn:hover { color: #fff; background: #1a2032; }
+  .mode-btn.active {
+    background: #dc2626;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(220, 38, 38, 0.5);
+  }
+
+  .controls-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .ctrl-btn {
+    background: #1a2032;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .ctrl-btn:hover { background: #252d47; border-color: #ef4444; color: #fff; }
+  .ctrl-btn.active-toggle { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; }
+
+  /* Breadcrumbs Nav */
+  .nav-bar {
+    background: #111522;
+    border-bottom: 1px solid var(--border);
+    padding: 6px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+  }
+  .crumb-btn {
+    background: #1a2032;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .crumb-btn:hover { background: #28314e; border-color: var(--accent); color: #fff; }
+  .crumb-btn.active { background: rgba(239, 68, 68, 0.2); border-color: var(--accent); color: #fca5a5; }
+  .crumb-sep { color: var(--text-muted); font-size: 11px; }
+
+  /* Stats Ribbon Above Telemetry */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 6px;
+    padding: 6px 16px;
+    background: #0a0d14;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-card {
+    background: #111522;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+  }
+  .stat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+  .stat-val {
+    font-size: 13px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: #fff;
+    margin-top: 2px;
+  }
+  .stat-val.red { color: #f87171; }
+  .stat-val.gold { color: #fbbf24; }
+  .stat-val.cyan { color: #38bdf8; }
+  .stat-val.green { color: #34d399; }
+
+  /* Telemetry Measurement & Telemetry Box DIRECTLY ABOVE View Window */
+  .telemetry-box {
+    background: linear-gradient(180deg, #111728 0%, #0c101c 100%);
+    border: 1px solid #2a334d;
+    border-radius: 8px;
+    margin: 8px 16px 0 16px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .telemetry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1e273e;
+    padding-bottom: 6px;
+  }
+  .telemetry-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #38bdf8;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .telemetry-readouts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px;
+  }
+  .readout-item {
+    background: #090d16;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+  }
+  .readout-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .readout-value {
+    font-size: 14px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: #f8fafc;
+    margin-top: 2px;
+  }
+
+  /* Volume & Balance Control Bar inside Telemetry Box */
+  .volume-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #090d16;
+    border: 1px solid #1e273e;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-top: 2px;
+    flex-wrap: wrap;
+  }
+  .volume-slider-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 220px;
+  }
+  .volume-slider-wrap label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .volume-slider-wrap input[type="range"] {
+    flex: 1;
+    accent-color: #ef4444;
+    cursor: pointer;
+  }
+  .balance-quality-badge {
+    font-size: 11px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid #ef4444;
+    color: #fca5a5;
+  }
+
+  /* Main Canvas Viewport */
+  .stage-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px 14px 16px;
+    min-height: 520px;
+    background: radial-gradient(circle at 50% 50%, #121626 0%, #06070a 85%);
+  }
+
+  #arenaCanvas {
+    background: #080a10;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    cursor: pointer;
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .canvas-overlay {
+    position: absolute;
+    bottom: 18px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .hint-badge {
+    background: rgba(11, 14, 23, 0.9);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    pointer-events: auto;
+  }
+  .hint-badge strong { color: #fff; }
+
+  /* Color Customization Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-card {
+    background: #0f1322;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    width: 360px;
+    max-width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .modal-header h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .close-modal-btn { background: transparent; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+  .color-section { margin-bottom: 14px; }
+  .color-section label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+  .swatch-group { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .color-swatch { width: 28px; height: 28px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s; }
+  .color-swatch:hover { transform: scale(1.1); }
+  .color-swatch.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+
+  /* Bottom Info Panels */
+  .bottom-info {
+    background: #0a0d14;
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 768px) {
+    .bottom-info { grid-template-columns: 1fr; }
+  }
+  .panel-box {
+    background: #111522;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .panel-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .legend-row { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-badge">CAPHET ARENA</div>
+    <div>
+      <h1 id="headerTitle">&#x1F590; 1,000-Bot Stacking Arena &#x1F91A;</h1>
+      <span class="sub">10 Macro Arenas &times; 10 Sectors &times; 10 Micro Rings</span>
+    </div>
+  </div>
+
+  <!-- Game Mode Selector Buttons -->
+  <div class="mode-switch-group">
+    <button class="mode-btn active" id="btnModeSideways" onclick="setGameMode('sideways')">
+      <span>&#x2194;&#xFE0F;</span> Sideways
+    </button>
+    <button class="mode-btn" id="btnModeTwin" onclick="setGameMode('twin')">
+      <span>&#x23EB;&#xFE0F;</span> Twin Stacks
+    </button>
+    <button class="mode-btn" id="btnModeTriple" onclick="setGameMode('triple')">
+      <span>&#x1F53A;</span> 3 Stacks
+    </button>
+  </div>
+
+  <div class="controls-bar">
+    <button class="ctrl-btn" id="btnToggleHands" onclick="toggleHandsVisibility()">
+      <span id="handsIcon">&#x1F590;</span> <span id="handsText">Hands: Visible</span>
+    </button>
+    <button class="ctrl-btn" id="btnColors" onclick="openColorsModal()">
+      <span>&#x1F3A8;</span> Colors
+    </button>
+    <button class="ctrl-btn" id="btnZoomOut" onclick="zoomOut()">&#x21A9; Zoom Out</button>
+    <button class="ctrl-btn" id="btnFollowBest" onclick="followBestBot()">&#x1F3AF; Auto-Follow</button>
+    <button class="ctrl-btn" id="btnResetAll" onclick="resetAllArenas()">&#x21BB; Restart</button>
+    <label style="font-size: 11px; color: var(--text-muted);">Speed:</label>
+    <select class="speed-select" id="speedSelect" onchange="changeSpeed(this.value)">
+      <option value="1">1x</option>
+      <option value="2" selected>2x</option>
+      <option value="4">4x</option>
+      <option value="8">8x</option>
+    </select>
+  </div>
+</header>
+
+<!-- Breadcrumbs Nav -->
+<div class="nav-bar">
+  <div class="breadcrumbs" id="breadcrumbTrail">
+    <button class="crumb-btn active" onclick="zoomTo(0)">&#x1F3DF; Top Level (10 Macro Rings)</button>
+  </div>
+  <div style="font-size: 11px; color: var(--text-muted);" id="legendBadge">
+    <span id="deckColorIndicator" style="display:inline-block; width:10px; height:10px; background:#fff; border-radius:50%; margin-right:4px; vertical-align:middle; border:1px solid #999;"></span> Floor Deck
+    <span id="coinColorIndicator" style="display:inline-block; width:10px; height:10px; background:#dc2626; border-radius:50%; margin-left:8px; margin-right:4px; vertical-align:middle;"></span> Coins
+    <span style="margin-left:8px;" id="handsIndicator">Hands: Active</span>
+  </div>
+</div>
+
+<!-- Stats Ribbon -->
+<div class="stats-grid" id="statsRibbon">
+  <div class="stat-card">
+    <div class="stat-label">Active Bots in Arena</div>
+    <div class="stat-val cyan">1,000</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label" id="labelStat1">Max Sideways Reach Record</div>
+    <div class="stat-val red" id="statRecord1">0.00 mm</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label" id="labelStat2">Max Coins Stacked Record</div>
+    <div class="stat-val gold" id="statRecord2">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Coins on Deck</div>
+    <div class="stat-val green" id="statTotalCoins">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Returned Coins</div>
+    <div class="stat-val gold" id="statReturnedCoins">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Collapses (0 Score)</div>
+    <div class="stat-val red" id="statTotalFalls">0</div>
+  </div>
+</div>
+
+<!-- TELEMETRY & MEASUREMENTS BOX DIRECTLY ABOVE THE VIEW WINDOW -->
+<div class="telemetry-box" id="telemetryBox">
+  <div class="telemetry-header">
+    <div class="telemetry-title">
+      <span>&#x26A1; LIVE TELEMETRY &amp; PHYSICS MEASUREMENTS</span>
+    </div>
+    <div id="telemetryBotId" style="font-family: var(--font-mono); font-size: 11px; color: #94a3b8;">
+      Selected: Macro #1 | Sector #1 | Bot #1
+    </div>
+  </div>
+
+  <div class="telemetry-readouts">
+    <div class="readout-item">
+      <span class="readout-label" id="boxLabelPrimary">CURRENT REACH / HEIGHT</span>
+      <span class="readout-value" id="boxValPrimary" style="color: #38bdf8;">0.00 mm</span>
+    </div>
+    <div class="readout-item">
+      <span class="readout-label">STACK COINS COUNT</span>
+      <span class="readout-value" id="boxValCoins" style="color: #fbbf24;">1 Coin</span>
+    </div>
+    <div class="readout-item">
+      <span class="readout-label">ARENA STATUS</span>
+      <span class="readout-value" id="boxValStatus" style="color: #34d399;">STACKING</span>
+    </div>
+    <div class="readout-item">
+      <span class="readout-label">BALANCE QUALITY</span>
+      <span class="readout-value" id="boxValBalanceQual" style="color: #f87171;">50% PERFECT</span>
+    </div>
+  </div>
+
+  <!-- Volume & Misbalance Precision Meter -->
+  <div class="volume-bar">
+    <div class="volume-slider-wrap">
+      <label>&#x1F4CA; Volume Level Meter:</label>
+      <input type="range" id="volumeSlider" min="10000" max="1000000" step="5000" value="500000" oninput="onVolumeChange(this.value)" />
+      <span id="volumeValText" style="font-family: var(--font-mono); font-size: 12px; font-weight: 800; color: #38bdf8;">$500,000</span>
+    </div>
+    <div class="balance-quality-badge" id="balanceBadge">
+      ⚖️ 50.0% Perfect Balance (50% Misbalanced)
+    </div>
+  </div>
+</div>
+
+<!-- Main Canvas Viewport -->
+<div class="stage-wrap">
+  <canvas id="arenaCanvas" width="960" height="540"></canvas>
+  <div class="canvas-overlay">
+    <div class="hint-badge" id="viewHint">
+      &#x1F446; <strong>Tap any Arena circle</strong> in the ring to zoom in.
+    </div>
+    <div class="hint-badge" id="goalHint">
+      &#x1F3C6; Goal: <strong>Max Sideways Length</strong> before center-of-mass topple!
+    </div>
+  </div>
+</div>
+
+<!-- Color Customization Modal -->
+<div class="modal-overlay" id="colorsModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>&#x1F3A8; Arena Color Customizer</h3>
+      <button class="close-modal-btn" onclick="closeColorsModal()">&times;</button>
+    </div>
+
+    <!-- Coin Color Section -->
+    <div class="color-section">
+      <label>Coin Color</label>
+      <div class="swatch-group">
+        <div class="color-swatch active" style="background:#dc2626;" onclick="setCoinColor('#dc2626', '#991b1b', '#f87171')"></div>
+        <div class="color-swatch" style="background:#0284c7;" onclick="setCoinColor('#0284c7', '#0369a1', '#38bdf8')"></div>
+        <div class="color-swatch" style="background:#d97706;" onclick="setCoinColor('#d97706', '#b45309', '#fbbf24')"></div>
+        <div class="color-swatch" style="background:#059669;" onclick="setCoinColor('#059669', '#047857', '#34d399')"></div>
+        <div class="color-swatch" style="background:#7c3aed;" onclick="setCoinColor('#7c3aed', '#6d28d9', '#c084fc')"></div>
+        <div class="color-swatch" style="background:#e11d48;" onclick="setCoinColor('#e11d48', '#be123c', '#fb7185')"></div>
+      </div>
+      <div class="custom-picker-row" style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted);">
+        <span>Custom Hex:</span>
+        <input type="color" id="customCoinPicker" value="#dc2626" onchange="onCustomCoinPick(this.value)" style="background:transparent; border:none; width:32px; height:28px; cursor:pointer;" />
+      </div>
+    </div>
+
+    <!-- Floor Floor Color Section -->
+    <div class="color-section">
+      <label>Floor Deck Color</label>
+      <div class="swatch-group">
+        <div class="color-swatch active" style="background:#ffffff; border:1px solid #ccc;" onclick="setFloorColor('#ffffff')"></div>
+        <div class="color-swatch" style="background:#0f172a;" onclick="setFloorColor('#0f172a')"></div>
+        <div class="color-swatch" style="background:#1e293b;" onclick="setFloorColor('#1e293b')"></div>
+        <div class="color-swatch" style="background:#172554;" onclick="setFloorColor('#172554')"></div>
+        <div class="color-swatch" style="background:#052e16;" onclick="setFloorColor('#052e16')"></div>
+        <div class="color-swatch" style="background:#3b0764;" onclick="setFloorColor('#3b0764')"></div>
+      </div>
+      <div class="custom-picker-row" style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted);">
+        <span>Custom Hex:</span>
+        <input type="color" id="customFloorPicker" value="#ffffff" onchange="onCustomFloorPick(this.value)" style="background:transparent; border:none; width:32px; height:28px; cursor:pointer;" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Info Panels -->
+<div class="bottom-info">
+  <div class="panel-box">
+    <div class="panel-title">
+      <span id="rulesTitle">&#x269B; Game Physics & Rules</span>
+      <span style="color:#ef4444;" id="rulesBadge">SIDEWAYS CANTILEVER</span>
+    </div>
+    <div class="legend-row" id="rulesContent">
+      <strong>Mode Objective:</strong> Stack single overhang cantilever to maximize horizontal reach.<br />
+      <strong>Topple Rule:</strong> Center of Mass &gt; base coin edge.<br />
+      <strong>Rolling Return:</strong> All fallen coins roll to arena center hub for collection &amp; return!
+    </div>
+  </div>
+
+  <div class="panel-box">
+    <div class="panel-title">
+      <span>&#x1F3DF; Straight Top-Down &amp; Misbalance Meter</span>
+      <span style="color:#38bdf8;">ACCURATE PHYSICS</span>
+    </div>
+    <div class="legend-row">
+      <strong>Micro View (Level 2):</strong> Clean straight top-down view centered on micro platforms.<br />
+      <strong>Volume &amp; Misbalance Physics:</strong> $10,000 Volume = 1% balance (50% extra misbalance); $1,000,000 Volume = 99% perfect balance.<br />
+      <strong>Rolling Collection:</strong> Collapsed stacks tumble and roll to center for player coin return!
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// CONSTANTS & GAME MODES
+// ============================================================================
+
+const COIN_DIAMETER = 36;
+const COIN_RADIUS = COIN_DIAMETER / 2; // 18
+const COIN_THICKNESS = 8;
+const TWIN_GAP = COIN_DIAMETER * 2; // 72 mm gap between base stack edges
+const MAX_STACK = 50;
+
+let currentGameMode = 'sideways'; // 'sideways' | 'twin' | 'triple'
+let handsVisible = true;
+
+// Volume Physics Level ($10,000 to $1,000,000)
+let currentVolumeUsd = 500000;
+let balanceQuality = 0.50; // 0.01 (1% at $10k) to 0.99 (99% at $1M)
+
+// Color State
+let currentFloorColor = '#ffffff';
+let currentCoinPrimary = '#dc2626';
+let currentCoinRim = '#991b1b';
+let currentCoinHighlight = '#f87171';
+
+const STRATEGIES = [
+  { factor: 0.50, jitter: 0.03, curveRate: 0.08 },
+  { factor: 0.72, jitter: 0.07, curveRate: 0.12 },
+  { factor: 0.44, jitter: 0.02, curveRate: 0.06 },
+  { factor: 0.85, jitter: 0.11, curveRate: 0.15 },
+  { factor: 0.48, jitter: 0.01, curveRate: 0.05 },
+  { factor: 0.60, jitter: 0.05, curveRate: 0.09 }
+];
+
+const BOTS = [];
+let botIdCounter = 0;
+
+for (let m = 0; m < 10; m++) {
+  for (let s = 0; s < 10; s++) {
+    for (let b = 0; b < 10; b++) {
+      const strat = STRATEGIES[(m * 7 + s * 3 + b) % STRATEGIES.length];
+      
+      const tripleLeftBaseX = -108;
+      const tripleMidBaseX = 0;
+      const tripleRightBaseX = 108;
+      
+      const bot = {
+        id: botIdCounter++,
+        macro: m,
+        sector: s,
+        micro: b,
+        strat: strat,
+        direction: (b % 2 === 0) ? 1 : -1,
+        
+        // Mode 1: Sideways cantilever single stack
+        coins: [{ x: 0, y: 0, r: COIN_RADIUS }],
+        
+        // Mode 2: Twin stacks (2 coin lengths apart)
+        leftBaseX: -(COIN_RADIUS + TWIN_GAP / 2),
+        rightBaseX: +(COIN_RADIUS + TWIN_GAP / 2),
+        leftStack: [{ x: -(COIN_RADIUS + TWIN_GAP / 2), y: 0, r: COIN_RADIUS }],
+        rightStack: [{ x: +(COIN_RADIUS + TWIN_GAP / 2), y: 0, r: COIN_RADIUS }],
+        nextTwinHand: 'left',
+        
+        // Mode 3: Triple stacks (3 stacks evenly spaced 2 coin lengths apart)
+        tripleLeftBaseX: tripleLeftBaseX,
+        tripleMidBaseX: tripleMidBaseX,
+        tripleRightBaseX: tripleRightBaseX,
+        tripleLeftStack: [{ x: tripleLeftBaseX, y: 0, r: COIN_RADIUS }],
+        tripleMidStack: [{ x: tripleMidBaseX, y: 0, r: COIN_RADIUS }],
+        tripleRightStack: [{ x: tripleRightBaseX, y: 0, r: COIN_RADIUS }],
+        nextTripleStack: 0,
+        
+        handState: {
+          active: false,
+          side: 'left',
+          targetX: 0,
+          targetY: 0,
+          currentX: -50,
+          currentY: 100,
+          carryingCoin: false,
+          progress: 0,
+          speed: 0.032 + Math.random() * 0.018
+        },
+        
+        sweepState: {
+          sweeping: false,
+          progress: 0,
+          fallenCoins: [] // Coins rolling to center hub!
+        },
+        
+        touchCelebrateState: {
+          active: false,
+          timer: 0,
+          heightScore: 0
+        },
+        
+        // Stats
+        maxReach: 0,
+        currentReach: 0,
+        maxTwinHeight: 0,
+        currentTwinHeight: 0,
+        maxTripleHeight: 0,
+        currentTripleHeight: 0,
+        totalTouches: 0,
+        fallsCount: 0,
+        timer: Math.random() * 60,
+        state: 'stacking' // 'stacking' | 'toppled' | 'sweeping' | 'touched'
+      };
+      
+      BOTS.push(bot);
+    }
+  }
+}
+
+let simSpeed = 2;
+let globalRecordReach = 0;
+let globalRecordCoins = 0;
+let globalRecordTwinHeight = 0;
+let globalRecordTripleHeight = 0;
+let globalTotalTouches = 0;
+let globalTotalFalls = 0;
+let globalTotalCoins = 0;
+let globalTotalReturnedCoins = 0;
+let followBest = false;
+
+// Zoom Navigation State: 0 (Macro Ring) -> 1 (Sector Ring) -> 2 (Micro Ring Straight Top-Down) -> 3 (Single Bot Side-View)
+let navState = {
+  level: 0,
+  selectedMacro: 0,
+  selectedSector: 0,
+  selectedBot: 0
+};
+
+const canvas = document.getElementById('arenaCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const container = canvas.parentElement;
+  const w = Math.min(container.clientWidth - 24, 1080);
+  canvas.width = Math.max(w, 480);
+  canvas.height = Math.round(canvas.width * 0.5625);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ============================================================================
+// VOLUME & BALANCE CALCULATIONS
+// $10,000 Volume = 1% balance (50% extra misbalance)
+// $1,000,000 Volume = 99% perfect balance (minimal misbalance)
+// ============================================================================
+
+function updateVolumePhysics(vol) {
+  currentVolumeUsd = parseFloat(vol);
+  
+  // Logarithmic scaling between $10,000 and $1,000,000
+  const minLog = Math.log10(10000); // 4
+  const maxLog = Math.log10(1000000); // 6
+  const currentLog = Math.log10(Math.max(10000, Math.min(1000000, currentVolumeUsd)));
+  
+  const norm = (currentLog - minLog) / (maxLog - minLog); // 0 to 1
+  balanceQuality = 0.01 + norm * 0.98; // 0.01 (1%) to 0.99 (99%)
+  
+  // UI update
+  document.getElementById('volumeValText').innerText = `$${Math.round(currentVolumeUsd).toLocaleString()}`;
+  const qualPercent = (balanceQuality * 100).toFixed(1);
+  const misbalancePercent = ((1 - balanceQuality) * 50 + 50).toFixed(1);
+  
+  document.getElementById('balanceBadge').innerText = `⚖️ ${qualPercent}% Perfect Balance (${misbalancePercent}% Misbalanced)`;
+  document.getElementById('boxValBalanceQual').innerText = `${qualPercent}% PERFECT`;
+  
+  if (balanceQuality > 0.7) {
+    document.getElementById('boxValBalanceQual').style.color = '#34d399';
+  } else if (balanceQuality > 0.3) {
+    document.getElementById('boxValBalanceQual').style.color = '#fbbf24';
+  } else {
+    document.getElementById('boxValBalanceQual').style.color = '#f87171';
+  }
+}
+
+function onVolumeChange(val) {
+  updateVolumePhysics(val);
+}
+
+// Initial volume calculation
+updateVolumePhysics(500000);
+
+// ============================================================================
+// HANDS TOGGLE & COLORS MODAL
+// ============================================================================
+
+function toggleHandsVisibility() {
+  handsVisible = !handsVisible;
+  const btn = document.getElementById('btnToggleHands');
+  const icon = document.getElementById('handsIcon');
+  const text = document.getElementById('handsText');
+  const indicator = document.getElementById('handsIndicator');
+  
+  if (handsVisible) {
+    btn.classList.remove('active-toggle');
+    icon.innerHTML = '&#x1F590;';
+    text.innerText = 'Hands: Visible';
+    indicator.innerText = 'Hands: Visible';
+  } else {
+    btn.classList.add('active-toggle');
+    icon.innerHTML = '&#x1F440;';
+    text.innerText = 'Hands: Hidden';
+    indicator.innerText = 'Hands: Hidden (Unseen)';
+  }
+}
+
+function openColorsModal() { document.getElementById('colorsModal').classList.add('open'); }
+function closeColorsModal() { document.getElementById('colorsModal').classList.remove('open'); }
+
+function setCoinColor(primary, rim, highlight) {
+  currentCoinPrimary = primary;
+  currentCoinRim = rim;
+  currentCoinHighlight = highlight;
+  document.getElementById('coinColorIndicator').style.background = primary;
+  document.getElementById('customCoinPicker').value = primary;
+}
+
+function onCustomCoinPick(hex) {
+  currentCoinPrimary = hex;
+  currentCoinRim = adjustBrightness(hex, -30);
+  currentCoinHighlight = adjustBrightness(hex, 30);
+  document.getElementById('coinColorIndicator').style.background = hex;
+}
+
+function setFloorColor(color) {
+  currentFloorColor = color;
+  document.getElementById('deckColorIndicator').style.background = color;
+  document.getElementById('customFloorPicker').value = color;
+}
+
+function onCustomFloorPick(hex) {
+  currentFloorColor = hex;
+  document.getElementById('deckColorIndicator').style.background = hex;
+}
+
+function adjustBrightness(hex, percent) {
+  let num = parseInt(hex.replace('#', ''), 16);
+  let r = (num >> 16) + Math.round(255 * (percent / 100));
+  let g = ((num >> 8) & 0x00FF) + Math.round(255 * (percent / 100));
+  let b = (num & 0x0000FF) + Math.round(255 * (percent / 100));
+  r = Math.min(255, Math.max(0, r));
+  g = Math.min(255, Math.max(0, g));
+  b = Math.min(255, Math.max(0, b));
+  return `#${(g | (b << 8) | (r << 16)).toString(16).padStart(6, '0')}`;
+}
+
+// ============================================================================
+// GAME MODE TOGGLE
+// ============================================================================
+
+function setGameMode(mode) {
+  currentGameMode = mode;
+  document.getElementById('btnModeSideways').classList.toggle('active', mode === 'sideways');
+  document.getElementById('btnModeTwin').classList.toggle('active', mode === 'twin');
+  document.getElementById('btnModeTriple').classList.toggle('active', mode === 'triple');
+  
+  if (mode === 'sideways') {
+    document.getElementById('headerTitle').innerHTML = '&#x1F590; 1,000-Bot Cantilever Coin Stacking &#x1F91A;';
+    document.getElementById('labelStat1').innerText = 'Max Sideways Reach Record';
+    document.getElementById('labelStat2').innerText = 'Max Coins Stacked Record';
+    document.getElementById('boxLabelPrimary').innerText = 'CURRENT REACH LENGTH';
+    document.getElementById('goalHint').innerHTML = '&#x1F3C6; Goal: <strong>Max Sideways Length</strong> before topple!';
+    document.getElementById('rulesTitle').innerHTML = '&#x269B; Sideways Cantilever Physics';
+    document.getElementById('rulesBadge').innerHTML = 'SIDEWAYS CANTILEVER';
+    document.getElementById('rulesBadge').style.color = '#ef4444';
+    document.getElementById('rulesContent').innerHTML = `
+      <strong>Goal:</strong> Stack single overhang cantilever to maximize horizontal reach.<br />
+      <strong>Topple Rule:</strong> Center of Mass &gt; base coin edge.<br />
+      <strong>Rolling Return:</strong> All fallen coins roll to arena center hub for collection &amp; return!
+    `;
+  } else if (mode === 'twin') {
+    document.getElementById('headerTitle').innerHTML = '&#x23EB;&#xFE0F; 1,000-Bot Twin Stacks Touching Arena &#x1F91A;';
+    document.getElementById('labelStat1').innerText = 'Max Height When Touched';
+    document.getElementById('labelStat2').innerText = 'Total Successful Touches';
+    document.getElementById('boxLabelPrimary').innerText = 'TWIN STACK HEIGHT';
+    document.getElementById('goalHint').innerHTML = '&#x1F3C6; Goal: <strong>Stack 2 Towers Tall</strong> until they touch! No score if fallen.';
+    document.getElementById('rulesTitle').innerHTML = '&#x269B; Twin Towers Proximity Physics';
+    document.getElementById('rulesBadge').innerHTML = '2-COIN-GAP TWIN STACK';
+    document.getElementById('rulesBadge').style.color = '#38bdf8';
+    document.getElementById('rulesContent').innerHTML = `
+      <strong>Goal:</strong> Stack two towers on floor 2 coin lengths apart (72 mm). The taller they stack before touching, the higher the score!<br />
+      <strong>Touch Rule:</strong> Coin distance &le; 2 &times; Radius (touching tips). Score = Height in mm.<br />
+      <strong>Fall Penalty:</strong> 0 Score if stacks collapse before touching! Coins roll to center for return.
+    `;
+  } else {
+    document.getElementById('headerTitle').innerHTML = '&#x1F53A; 1,000-Bot 3-Stack Touching Arena &#x1F91A;';
+    document.getElementById('labelStat1').innerText = 'Max 3-Stack Height Touched';
+    document.getElementById('labelStat2').innerText = 'Total 3-Stack Touches';
+    document.getElementById('boxLabelPrimary').innerText = '3-STACK HEIGHT';
+    document.getElementById('goalHint').innerHTML = '&#x1F3C6; Goal: <strong>Stack 3 Towers Tall</strong> until they touch! No score if fallen.';
+    document.getElementById('rulesTitle').innerHTML = '&#x269B; Triple Towers Proximity Physics';
+    document.getElementById('rulesBadge').innerHTML = '3-STACK 2-COIN-GAP';
+    document.getElementById('rulesBadge').style.color = '#f59e0b';
+    document.getElementById('rulesContent').innerHTML = `
+      <strong>Goal:</strong> Stack three towers on floor evenly spaced 2 coin lengths apart (72 mm each). Taller stack before touching = higher score!<br />
+      <strong>Touch Rule:</strong> When adjacent towers touch, score locks at height in mm.<br />
+      <strong>Fall Penalty:</strong> 0 Score if any tower collapses before touching!
+    `;
+  }
+  
+  resetAllArenas();
+  updateStatsUI();
+  updateBreadcrumbs();
+}
+
+// ============================================================================
+// STABILITY & COLLISION CHECKS
+// ============================================================================
+
+function checkSingleStackStability(coins) {
+  const n = coins.length;
+  if (n <= 1) return { stable: true };
+  
+  for (let k = 1; k < n; k++) {
+    let sumX = 0;
+    const count = n - k;
+    for (let i = k; i < n; i++) {
+      sumX += coins[i].x;
+    }
+    const comX = sumX / count;
+    const baseUnder = coins[k - 1];
+    
+    const leftEdge = baseUnder.x - COIN_RADIUS;
+    const rightEdge = baseUnder.x + COIN_RADIUS;
+    
+    if (comX < leftEdge || comX > rightEdge) {
+      return { stable: false, failedAt: k };
+    }
+  }
+  return { stable: true };
+}
+
+function checkTwoStacksTouch(stackA, stackB) {
+  for (let i = 0; i < stackA.length; i++) {
+    const cA = stackA[i];
+    for (let j = 0; j < stackB.length; j++) {
+      const cB = stackB[j];
+      const dist = Math.hypot(cB.x - cA.x, cB.y - cA.y);
+      if (dist <= COIN_DIAMETER * 0.98) {
+        const heightMm = Math.max(cA.y, cB.y) + COIN_THICKNESS;
+        return { touched: true, heightMm };
+      }
+    }
+  }
+  return { touched: false };
+}
+
+// ============================================================================
+// SIMULATION UPDATES WITH ROLLING COINS & MISBALANCE PHYSICS
+// ============================================================================
+
+function updateSimulation() {
+  globalTotalCoins = 0;
+  
+  for (let b = 0; b < BOTS.length; b++) {
+    const bot = BOTS[b];
+    if (currentGameMode === 'sideways') {
+      updateBotSideways(bot);
+    } else if (currentGameMode === 'twin') {
+      updateBotTwin(bot);
+    } else {
+      updateBotTriple(bot);
+    }
+  }
+  
+  if (followBest) {
+    let topBot = BOTS[0];
+    for (let b of BOTS) {
+      if (currentGameMode === 'sideways') {
+        if (b.currentReach > topBot.currentReach) topBot = b;
+      } else if (currentGameMode === 'twin') {
+        if (b.currentTwinHeight > topBot.currentTwinHeight) topBot = b;
+      } else {
+        if (b.currentTripleHeight > topBot.currentTripleHeight) topBot = b;
+      }
+    }
+    navState.selectedMacro = topBot.macro;
+    navState.selectedSector = topBot.sector;
+    navState.selectedBot = topBot.micro;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// MODE 1 UPDATE: SIDEWAYS CANTILEVER
+// ----------------------------------------------------------------------------
+function updateBotSideways(bot) {
+  globalTotalCoins += bot.coins.length;
+  
+  if (bot.state === 'stacking') {
+    bot.timer += 0.05 * simSpeed;
+    const hand = bot.handState;
+    
+    if (!hand.active) {
+      hand.active = true;
+      hand.progress = 0;
+      hand.carryingCoin = true;
+      hand.side = (bot.coins.length % 2 === 0) ? 'left' : 'right';
+      
+      const n = bot.coins.length;
+      const lastCoin = bot.coins[n - 1];
+      
+      // Misbalance multiplier based on Volume Level!
+      // Low volume ($10k) gives 1.5x misbalance jitter, High volume ($1M) gives 0.02x jitter
+      const misbalanceScale = 1.5 * (1 - balanceQuality * 0.98);
+      
+      const idealStep = (COIN_RADIUS / (2 * n)) * bot.strat.factor;
+      const jitter = (Math.random() - 0.45) * bot.strat.jitter * COIN_RADIUS * misbalanceScale;
+      const dx = (idealStep + jitter) * bot.direction;
+      
+      hand.targetX = lastCoin.x + dx;
+      hand.targetY = n * COIN_THICKNESS;
+      hand.currentX = (hand.side === 'left') ? -80 : 80;
+      hand.currentY = hand.targetY + 40;
+    } else {
+      hand.progress += hand.speed * simSpeed;
+      const t = Math.min(hand.progress, 1);
+      const ease = t * (2 - t);
+      const startX = (hand.side === 'left') ? -80 : 80;
+      const startY = hand.targetY + 40;
+      
+      hand.currentX = startX + (hand.targetX - startX) * ease;
+      hand.currentY = startY + (hand.targetY - startY) * ease;
+      
+      if (hand.progress >= 1 && hand.carryingCoin) {
+        hand.carryingCoin = false;
+        bot.coins.push({ x: hand.targetX, y: hand.targetY, r: COIN_RADIUS });
+        
+        const stableResult = checkSingleStackStability(bot.coins);
+        if (!stableResult.stable) {
+          triggerStackToppleAndRolling(bot, bot.coins);
+          bot.coins = [];
+        } else {
+          let minEdge = bot.coins[0].x - COIN_RADIUS;
+          let maxEdge = bot.coins[0].x + COIN_RADIUS;
+          for (let c of bot.coins) {
+            minEdge = Math.min(minEdge, c.x - COIN_RADIUS);
+            maxEdge = Math.max(maxEdge, c.x + COIN_RADIUS);
+          }
+          bot.currentReach = maxEdge - minEdge;
+          if (bot.currentReach > bot.maxReach) bot.maxReach = bot.currentReach;
+          if (bot.maxReach > globalRecordReach) globalRecordReach = bot.maxReach;
+          if (bot.coins.length > globalRecordCoins) globalRecordCoins = bot.coins.length;
+          
+          if (bot.coins.length >= MAX_STACK) {
+            bot.coins = [{ x: 0, y: 0, r: COIN_RADIUS }];
+          }
+        }
+      }
+      if (hand.progress >= 1.4) hand.active = false;
+    }
+  } else if (bot.state === 'toppled') {
+    handleToppledFallenPhysics(bot);
+  } else if (bot.state === 'sweeping') {
+    handleSweepingReset(bot, () => {
+      bot.coins = [{ x: 0, y: 0, r: COIN_RADIUS }];
+    });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// MODE 2 UPDATE: TWIN STACKS TOUCHING GAME
+// ----------------------------------------------------------------------------
+function updateBotTwin(bot) {
+  globalTotalCoins += (bot.leftStack.length + bot.rightStack.length);
+  
+  if (bot.state === 'stacking') {
+    bot.timer += 0.05 * simSpeed;
+    const hand = bot.handState;
+    
+    if (!hand.active) {
+      hand.active = true;
+      hand.progress = 0;
+      hand.carryingCoin = true;
+      
+      const isLeft = (bot.nextTwinHand === 'left');
+      hand.side = isLeft ? 'left' : 'right';
+      const targetStack = isLeft ? bot.leftStack : bot.rightStack;
+      const n = targetStack.length;
+      const lastCoin = targetStack[n - 1];
+      
+      const misbalanceScale = 1.5 * (1 - balanceQuality * 0.98);
+      const inwardDirection = isLeft ? 1 : -1;
+      const curveStep = (1.2 + Math.random() * 2.2) * bot.strat.curveRate * inwardDirection * 3.5;
+      const jitter = (Math.random() - 0.5) * bot.strat.jitter * 10 * misbalanceScale;
+      
+      hand.targetX = lastCoin.x + curveStep + jitter;
+      hand.targetY = n * COIN_THICKNESS;
+      hand.currentX = isLeft ? -95 : 95;
+      hand.currentY = hand.targetY + 45;
+    } else {
+      hand.progress += hand.speed * simSpeed;
+      const t = Math.min(hand.progress, 1);
+      const ease = t * (2 - t);
+      const isLeft = (hand.side === 'left');
+      const startX = isLeft ? -95 : 95;
+      const startY = hand.targetY + 45;
+      
+      hand.currentX = startX + (hand.targetX - startX) * ease;
+      hand.currentY = startY + (hand.targetY - startY) * ease;
+      
+      if (hand.progress >= 1 && hand.carryingCoin) {
+        hand.carryingCoin = false;
+        const newCoin = { x: hand.targetX, y: hand.targetY, r: COIN_RADIUS };
+        
+        if (isLeft) {
+          bot.leftStack.push(newCoin);
+          bot.nextTwinHand = 'right';
+        } else {
+          bot.rightStack.push(newCoin);
+          bot.nextTwinHand = 'left';
+        }
+        
+        const leftStable = checkSingleStackStability(bot.leftStack);
+        const rightStable = checkSingleStackStability(bot.rightStack);
+        
+        if (!leftStable.stable || !rightStable.stable) {
+          triggerStackToppleAndRolling(bot, [...bot.leftStack, ...bot.rightStack]);
+          bot.leftStack = [];
+          bot.rightStack = [];
+        } else {
+          const touchResult = checkTwoStacksTouch(bot.leftStack, bot.rightStack);
+          bot.currentTwinHeight = Math.max(bot.leftStack.length * COIN_THICKNESS, bot.rightStack.length * COIN_THICKNESS);
+          
+          if (touchResult.touched) {
+            bot.state = 'touched';
+            bot.totalTouches++;
+            globalTotalTouches++;
+            bot.touchCelebrateState.active = true;
+            bot.touchCelebrateState.timer = 0;
+            bot.touchCelebrateState.heightScore = touchResult.heightMm;
+            
+            if (touchResult.heightMm > bot.maxTwinHeight) bot.maxTwinHeight = touchResult.heightMm;
+            if (bot.maxTwinHeight > globalRecordTwinHeight) globalRecordTwinHeight = bot.maxTwinHeight;
+          } else {
+            if (bot.leftStack.length >= MAX_STACK || bot.rightStack.length >= MAX_STACK) {
+              bot.state = 'toppled';
+              bot.leftStack = [{ x: bot.leftBaseX, y: 0, r: COIN_RADIUS }];
+              bot.rightStack = [{ x: bot.rightBaseX, y: 0, r: COIN_RADIUS }];
+            }
+          }
+        }
+      }
+      if (hand.progress >= 1.4) hand.active = false;
+    }
+  } else if (bot.state === 'touched') {
+    bot.touchCelebrateState.timer += 0.03 * simSpeed;
+    if (bot.touchCelebrateState.timer >= 2) {
+      bot.state = 'sweeping';
+      bot.sweepState.sweeping = true;
+      bot.sweepState.progress = 0;
+      bot.leftStack = [];
+      bot.rightStack = [];
+    }
+  } else if (bot.state === 'toppled') {
+    handleToppledFallenPhysics(bot);
+  } else if (bot.state === 'sweeping') {
+    handleSweepingReset(bot, () => {
+      bot.leftStack = [{ x: bot.leftBaseX, y: 0, r: COIN_RADIUS }];
+      bot.rightStack = [{ x: bot.rightBaseX, y: 0, r: COIN_RADIUS }];
+      bot.nextTwinHand = 'left';
+    });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// MODE 3 UPDATE: 3 STACKS TOUCHING GAME
+// ----------------------------------------------------------------------------
+function updateBotTriple(bot) {
+  globalTotalCoins += (bot.tripleLeftStack.length + bot.tripleMidStack.length + bot.tripleRightStack.length);
+  
+  if (bot.state === 'stacking') {
+    bot.timer += 0.05 * simSpeed;
+    const hand = bot.handState;
+    
+    if (!hand.active) {
+      hand.active = true;
+      hand.progress = 0;
+      hand.carryingCoin = true;
+      
+      const targetIdx = bot.nextTripleStack;
+      let targetStack = bot.tripleMidStack;
+      let curveDir = 0;
+      if (targetIdx === 0) {
+        targetStack = bot.tripleLeftStack;
+        curveDir = 1;
+        hand.side = 'left';
+      } else if (targetIdx === 1) {
+        targetStack = bot.tripleMidStack;
+        curveDir = (Math.random() > 0.5 ? 1 : -1) * 0.4;
+        hand.side = 'left';
+      } else {
+        targetStack = bot.tripleRightStack;
+        curveDir = -1;
+        hand.side = 'right';
+      }
+      
+      const n = targetStack.length;
+      const lastCoin = targetStack[n - 1];
+      const misbalanceScale = 1.5 * (1 - balanceQuality * 0.98);
+      const curveStep = (1.1 + Math.random() * 2.0) * bot.strat.curveRate * curveDir * 3.2;
+      const jitter = (Math.random() - 0.5) * bot.strat.jitter * 8 * misbalanceScale;
+      
+      hand.targetX = lastCoin.x + curveStep + jitter;
+      hand.targetY = n * COIN_THICKNESS;
+      hand.currentX = (targetIdx === 0) ? -140 : (targetIdx === 2 ? 140 : 0);
+      hand.currentY = hand.targetY + 45;
+    } else {
+      hand.progress += hand.speed * simSpeed;
+      const t = Math.min(hand.progress, 1);
+      const ease = t * (2 - t);
+      const startX = (bot.nextTripleStack === 0) ? -140 : (bot.nextTripleStack === 2 ? 140 : 0);
+      const startY = hand.targetY + 45;
+      
+      hand.currentX = startX + (hand.targetX - startX) * ease;
+      hand.currentY = startY + (hand.targetY - startY) * ease;
+      
+      if (hand.progress >= 1 && hand.carryingCoin) {
+        hand.carryingCoin = false;
+        const newCoin = { x: hand.targetX, y: hand.targetY, r: COIN_RADIUS };
+        
+        if (bot.nextTripleStack === 0) {
+          bot.tripleLeftStack.push(newCoin);
+          bot.nextTripleStack = 1;
+        } else if (bot.nextTripleStack === 1) {
+          bot.tripleMidStack.push(newCoin);
+          bot.nextTripleStack = 2;
+        } else {
+          bot.tripleRightStack.push(newCoin);
+          bot.nextTripleStack = 0;
+        }
+        
+        const lStable = checkSingleStackStability(bot.tripleLeftStack);
+        const mStable = checkSingleStackStability(bot.tripleMidStack);
+        const rStable = checkSingleStackStability(bot.tripleRightStack);
+        
+        if (!lStable.stable || !mStable.stable || !rStable.stable) {
+          triggerStackToppleAndRolling(bot, [...bot.tripleLeftStack, ...bot.tripleMidStack, ...bot.tripleRightStack]);
+          bot.tripleLeftStack = [];
+          bot.tripleMidStack = [];
+          bot.tripleRightStack = [];
+        } else {
+          const touchLM = checkTwoStacksTouch(bot.tripleLeftStack, bot.tripleMidStack);
+          const touchMR = checkTwoStacksTouch(bot.tripleMidStack, bot.tripleRightStack);
+          
+          bot.currentTripleHeight = Math.max(
+            bot.tripleLeftStack.length * COIN_THICKNESS,
+            bot.tripleMidStack.length * COIN_THICKNESS,
+            bot.tripleRightStack.length * COIN_THICKNESS
+          );
+          
+          if (touchLM.touched || touchMR.touched) {
+            const hScore = Math.max(touchLM.heightMm || 0, touchMR.heightMm || 0);
+            bot.state = 'touched';
+            bot.totalTouches++;
+            globalTotalTouches++;
+            bot.touchCelebrateState.active = true;
+            bot.touchCelebrateState.timer = 0;
+            bot.touchCelebrateState.heightScore = hScore;
+            
+            if (hScore > bot.maxTripleHeight) bot.maxTripleHeight = hScore;
+            if (bot.maxTripleHeight > globalRecordTripleHeight) globalRecordTripleHeight = bot.maxTripleHeight;
+          } else {
+            if (bot.tripleLeftStack.length >= MAX_STACK || bot.tripleMidStack.length >= MAX_STACK || bot.tripleRightStack.length >= MAX_STACK) {
+              bot.state = 'toppled';
+              bot.tripleLeftStack = [{ x: bot.tripleLeftBaseX, y: 0, r: COIN_RADIUS }];
+              bot.tripleMidStack = [{ x: bot.tripleMidBaseX, y: 0, r: COIN_RADIUS }];
+              bot.tripleRightStack = [{ x: bot.tripleRightBaseX, y: 0, r: COIN_RADIUS }];
+            }
+          }
+        }
+      }
+      if (hand.progress >= 1.4) hand.active = false;
+    }
+  } else if (bot.state === 'touched') {
+    bot.touchCelebrateState.timer += 0.03 * simSpeed;
+    if (bot.touchCelebrateState.timer >= 2) {
+      bot.state = 'sweeping';
+      bot.sweepState.sweeping = true;
+      bot.sweepState.progress = 0;
+      bot.tripleLeftStack = [];
+      bot.tripleMidStack = [];
+      bot.tripleRightStack = [];
+    }
+  } else if (bot.state === 'toppled') {
+    handleToppledFallenPhysics(bot);
+  } else if (bot.state === 'sweeping') {
+    handleSweepingReset(bot, () => {
+      bot.tripleLeftStack = [{ x: bot.tripleLeftBaseX, y: 0, r: COIN_RADIUS }];
+      bot.tripleMidStack = [{ x: bot.tripleMidBaseX, y: 0, r: COIN_RADIUS }];
+      bot.tripleRightStack = [{ x: bot.tripleRightBaseX, y: 0, r: COIN_RADIUS }];
+      bot.nextTripleStack = 0;
+    });
+  }
+}
+
+// Helper to trigger stack collapse & coins rolling to center
+function triggerStackToppleAndRolling(bot, coinsToTopple) {
+  bot.state = 'toppled';
+  bot.fallsCount++;
+  globalTotalFalls++;
+  bot.sweepState.sweeping = false;
+  bot.sweepState.progress = 0;
+  
+  // Convert stack coins into physical rolling coins toward arena center hub
+  bot.sweepState.fallenCoins = coinsToTopple.map(c => {
+    const fallDir = (c.x >= 0 ? 1 : -1);
+    return {
+      x: c.x,
+      y: c.y,
+      vx: (Math.random() - 0.5) * 6 + fallDir * 4,
+      vy: Math.random() * 6 + 3,
+      rot: 0,
+      vRot: (Math.random() - 0.5) * 0.4,
+      rollingToCenter: false,
+      rollProgress: 0,
+      returned: false
+    };
+  });
+}
+
+function handleToppledFallenPhysics(bot) {
+  const sweep = bot.sweepState;
+  let allReturnedToCenter = true;
+  
+  for (let fc of sweep.fallenCoins) {
+    if (!fc.returned) {
+      allReturnedToCenter = false;
+      
+      if (!fc.rollingToCenter) {
+        // Initial arc tumble to floor
+        fc.x += fc.vx * simSpeed * 0.5;
+        fc.y -= fc.vy * simSpeed * 0.5;
+        fc.vy -= 0.35 * simSpeed;
+        fc.rot += fc.vRot * simSpeed;
+        
+        if (fc.y <= 0) {
+          fc.y = 0;
+          fc.rollingToCenter = true; // Start rolling to center hub (0,0)
+          fc.rollProgress = 0;
+        }
+      } else {
+        // Rolling along deck floor toward center hub (0,0)
+        fc.rollProgress += 0.04 * simSpeed;
+        const t = Math.min(fc.rollProgress, 1);
+        
+        fc.x = fc.x * (1 - t * 0.08); // Roll in
+        fc.rot += 0.2 * simSpeed;
+        
+        if (t >= 1 || Math.abs(fc.x) < 4) {
+          fc.returned = true;
+          globalTotalReturnedCoins++; // Collected and returned to player!
+        }
+      }
+    }
+  }
+  
+  bot.timer += 0.05 * simSpeed;
+  if (allReturnedToCenter || bot.timer > 2.5) {
+    bot.state = 'sweeping';
+    sweep.sweeping = true;
+    sweep.progress = 0;
+  }
+}
+
+function handleSweepingReset(bot, resetCallback) {
+  const sweep = bot.sweepState;
+  sweep.progress += 0.04 * simSpeed;
+  
+  if (sweep.progress >= 1) {
+    bot.state = 'stacking';
+    resetCallback();
+    bot.sweepState.fallenCoins = [];
+    bot.handState.active = false;
+    bot.timer = 0;
+  }
+}
+
+// ============================================================================
+// CIRCULAR RING GEOMETRY HELPER
+// ============================================================================
+
+function getCircleRingPositions(cx, cy, maxRadius, count = 10) {
+  const sinHalfAngle = Math.sin(Math.PI / count);
+  const ringRadius = maxRadius / (1 + sinHalfAngle);
+  const circleRadius = ringRadius * sinHalfAngle * 0.96;
+  
+  const positions = [];
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+    positions.push({
+      x: cx + Math.cos(angle) * ringRadius,
+      y: cy + Math.sin(angle) * ringRadius,
+      r: circleRadius,
+      angle: angle
+    });
+  }
+  return { ringRadius, circleRadius, positions };
+}
+
+// ============================================================================
+// CANVAS RENDERING
+// ============================================================================
+
+function render() {
+  const w = canvas.width;
+  const h = canvas.height;
+  
+  ctx.fillStyle = '#07080d';
+  ctx.fillRect(0, 0, w, h);
+  
+  if (navState.level === 0) {
+    renderLevel0_MacroRing(w, h);
+  } else if (navState.level === 1) {
+    renderLevel1_SectorRing(w, h);
+  } else if (navState.level === 2) {
+    renderLevel2_MicroRingStraightTopDown(w, h);
+  } else if (navState.level === 3) {
+    renderLevel3_SideView(w, h);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// LEVEL 0: 10 MACRO ARENAS ARRANGED IN A TIGHT CIRCLE
+// ----------------------------------------------------------------------------
+function renderLevel0_MacroRing(w, h) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const maxR = Math.min(w, h) * 0.46;
+  
+  const ring = getCircleRingPositions(cx, cy, maxR, 10);
+  
+  ctx.save();
+  ctx.fillStyle = '#0d101a';
+  ctx.strokeStyle = '#1e2436';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, ring.ringRadius * 0.42, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  
+  for (let m = 0; m < 10; m++) {
+    const pos = ring.positions[m];
+    
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 12;
+    
+    ctx.fillStyle = currentFloorColor;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, pos.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    ctx.strokeStyle = currentCoinPrimary;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    const innerRing = getCircleRingPositions(pos.x, pos.y, pos.r * 0.85, 10);
+    const macroBots = BOTS.filter(b => b.macro === m);
+    
+    for (let s = 0; s < 10; s++) {
+      const sPos = innerRing.positions[s];
+      ctx.fillStyle = currentFloorColor === '#ffffff' ? '#f1f5f9' : '#1e293b';
+      ctx.beginPath();
+      ctx.arc(sPos.x, sPos.y, sPos.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = currentCoinHighlight;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+// ----------------------------------------------------------------------------
+// LEVEL 1: SECTOR RING VIEW (STRAIGHT TOP-DOWN)
+// ----------------------------------------------------------------------------
+function renderLevel1_SectorRing(w, h) {
+  const m = navState.selectedMacro;
+  const cx = w / 2;
+  const cy = h / 2;
+  const maxR = Math.min(w, h) * 0.46;
+  
+  ctx.save();
+  ctx.fillStyle = currentFloorColor;
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR * 1.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = currentCoinPrimary;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  
+  const ring = getCircleRingPositions(cx, cy, maxR, 10);
+  const macroBots = BOTS.filter(b => b.macro === m);
+  
+  for (let s = 0; s < 10; s++) {
+    const pos = ring.positions[s];
+    
+    ctx.fillStyle = currentFloorColor === '#ffffff' ? '#f8fafc' : '#1e293b';
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, pos.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = currentCoinHighlight;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    
+    const innerRing = getCircleRingPositions(pos.x, pos.y, pos.r * 0.85, 10);
+    const sectorBots = macroBots.filter(b => b.sector === s);
+    
+    for (let i = 0; i < 10; i++) {
+      const bPos = innerRing.positions[i];
+      const bot = sectorBots[i];
+      
+      ctx.fillStyle = currentFloorColor;
+      ctx.beginPath();
+      ctx.arc(bPos.x, bPos.y, bPos.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = currentCoinPrimary;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+// ----------------------------------------------------------------------------
+// LEVEL 2: MICRO RING (CLEAN STRAIGHT TOP-DOWN VIEW - NO OVERLAP)
+// ----------------------------------------------------------------------------
+function renderLevel2_MicroRingStraightTopDown(w, h) {
+  const m = navState.selectedMacro;
+  const s = navState.selectedSector;
+  const cx = w / 2;
+  const cy = h / 2;
+  const maxR = Math.min(w, h) * 0.46;
+  
+  // Clean orthogonal base deck for micro view
+  ctx.save();
+  ctx.fillStyle = currentFloorColor;
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR * 1.06, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = currentCoinPrimary;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  
+  // Center collection hub (where rolling coins roll in!)
+  ctx.fillStyle = (currentFloorColor === '#ffffff') ? '#f1f5f9' : '#0f172a';
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('COLLECTION', cx, cy - 6);
+  ctx.fillText('CENTER HUB', cx, cy + 6);
+  
+  const ring = getCircleRingPositions(cx, cy, maxR, 10);
+  const sectorBots = BOTS.filter(b => b.macro === m && b.sector === s);
+  
+  for (let b = 0; b < 10; b++) {
+    const pos = ring.positions[b];
+    const bot = sectorBots[b];
+    
+    // Clean straight top-down platform
+    ctx.fillStyle = currentFloorColor === '#ffffff' ? '#ffffff' : '#1e293b';
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, pos.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = currentCoinPrimary;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    
+    // Render top-down coins cleanly without overlapping
+    if (currentGameMode === 'sideways') {
+      if (bot.coins.length > 0) {
+        ctx.fillStyle = currentCoinPrimary;
+        ctx.beginPath();
+        const topCoin = bot.coins[bot.coins.length - 1];
+        const offset = (topCoin.x / COIN_RADIUS) * (pos.r * 0.3);
+        ctx.arc(pos.x + offset, pos.y, pos.r * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (currentGameMode === 'twin') {
+      ctx.fillStyle = currentCoinPrimary;
+      if (bot.leftStack.length > 0) {
+        ctx.beginPath();
+        ctx.arc(pos.x - pos.r * 0.38, pos.y, pos.r * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (bot.rightStack.length > 0) {
+        ctx.beginPath();
+        ctx.arc(pos.x + pos.r * 0.38, pos.y, pos.r * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = currentCoinPrimary;
+      if (bot.tripleLeftStack.length > 0) {
+        ctx.beginPath();
+        ctx.arc(pos.x - pos.r * 0.45, pos.y, pos.r * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (bot.tripleMidStack.length > 0) {
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, pos.r * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (bot.tripleRightStack.length > 0) {
+        ctx.beginPath();
+        ctx.arc(pos.x + pos.r * 0.45, pos.y, pos.r * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // Render rolling coins toward center hub
+    if (bot.state === 'toppled' || bot.state === 'sweeping') {
+      for (let fc of bot.sweepState.fallenCoins) {
+        if (!fc.returned) {
+          const rollX = pos.x + (cx - pos.x) * (fc.rollProgress || 0);
+          const rollY = pos.y + (cy - pos.y) * (fc.rollProgress || 0);
+          
+          ctx.fillStyle = currentCoinHighlight;
+          ctx.beginPath();
+          ctx.arc(rollX, rollY, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+  }
+  ctx.restore();
+}
+
+// ----------------------------------------------------------------------------
+// LEVEL 3: SIDE VIEW WITH DYNAMIC HEIGHT AUTO-ZOOM
+// ----------------------------------------------------------------------------
+function renderLevel3_SideView(w, h) {
+  const m = navState.selectedMacro;
+  const s = navState.selectedSector;
+  const b = navState.selectedBot;
+  
+  const bot = BOTS.find(item => item.macro === m && item.sector === s && item.micro === b) || BOTS[0];
+  
+  // Dynamic Auto-Zoom calculation based on stack height
+  let maxCoinsCount = 1;
+  if (currentGameMode === 'sideways') {
+    maxCoinsCount = bot.coins.length;
+  } else if (currentGameMode === 'twin') {
+    maxCoinsCount = Math.max(bot.leftStack.length, bot.rightStack.length);
+  } else {
+    maxCoinsCount = Math.max(bot.tripleLeftStack.length, bot.tripleMidStack.length, bot.tripleRightStack.length);
+  }
+  
+  const rawStackHeightPx = maxCoinsCount * COIN_THICKNESS * 2.0;
+  const availableVerticalPx = h * 0.58;
+  let zoomFactor = 1.0;
+  if (rawStackHeightPx > availableVerticalPx) {
+    zoomFactor = availableVerticalPx / rawStackHeightPx;
+  }
+  
+  const scale = 2.0 * zoomFactor;
+  const cx = w / 2;
+  const cy = h * 0.76;
+  const floorRadius = Math.min(w * 0.44, 420 * zoomFactor);
+  
+  ctx.save();
+  
+  // Floor Deck
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = currentFloorColor;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, floorRadius, floorRadius * 0.42, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  
+  ctx.strokeStyle = currentCoinPrimary;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  
+  if (currentGameMode === 'sideways') {
+    renderSideView_Cantilever(bot, cx, cy, floorRadius, scale);
+  } else if (currentGameMode === 'twin') {
+    renderSideView_TwinStacks(bot, cx, cy, floorRadius, scale);
+  } else {
+    renderSideView_TripleStacks(bot, cx, cy, floorRadius, scale);
+  }
+  
+  ctx.restore();
+}
+
+// ----------------------------------------------------------------------------
+// SIDE VIEW RENDERING FUNCTIONS
+// ----------------------------------------------------------------------------
+function renderSideView_Cantilever(bot, cx, cy, floorRadius, scale) {
+  ctx.fillStyle = currentFloorColor;
+  ctx.strokeStyle = currentCoinPrimary;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, COIN_RADIUS * scale, (COIN_RADIUS * scale) * 0.44, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  
+  if (bot.state === 'stacking') {
+    for (let i = 0; i < bot.coins.length; i++) {
+      const c = bot.coins[i];
+      drawDetailedCoin(ctx, cx + c.x * scale, cy - (i * COIN_THICKNESS * scale), COIN_RADIUS * scale, COIN_THICKNESS * scale, i === bot.coins.length - 1);
+    }
+    
+    if (handsVisible && bot.handState.active) {
+      const hand = bot.handState;
+      const hx = cx + hand.currentX * scale;
+      const hy = cy - (hand.currentY * scale);
+      ctx.font = `${Math.round(44 * (scale / 2.0))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(hand.side === 'left' ? '🖐' : '🤚', hx, hy - 18 * (scale / 2.0));
+      if (hand.carryingCoin) {
+        drawDetailedCoin(ctx, hx, hy, COIN_RADIUS * scale, COIN_THICKNESS * scale, true);
+      }
+    }
+  } else if (bot.state === 'toppled' || bot.state === 'sweeping') {
+    renderFallenAndRollingCoins(bot, cx, cy, floorRadius, scale);
+  }
+}
+
+function renderSideView_TwinStacks(bot, cx, cy, floorRadius, scale) {
+  const leftBaseScreenX = cx + bot.leftBaseX * scale;
+  const rightBaseScreenX = cx + bot.rightBaseX * scale;
+  
+  ctx.fillStyle = currentFloorColor;
+  ctx.strokeStyle = currentCoinPrimary;
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  ctx.ellipse(leftBaseScreenX, cy, COIN_RADIUS * scale, (COIN_RADIUS * scale) * 0.44, 0, 0, Math.PI * 2);
+  ctx.ellipse(rightBaseScreenX, cy, COIN_RADIUS * scale, (COIN_RADIUS * scale) * 0.44, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  
+  if (bot.state === 'stacking' || bot.state === 'touched') {
+    for (let i = 0; i < bot.leftStack.length; i++) {
+      const c = bot.leftStack[i];
+      drawDetailedCoin(ctx, cx + c.x * scale, cy - (i * COIN_THICKNESS * scale), COIN_RADIUS * scale, COIN_THICKNESS * scale, i === bot.leftStack.length - 1);
+    }
+    for (let i = 0; i < bot.rightStack.length; i++) {
+      const c = bot.rightStack[i];
+      drawDetailedCoin(ctx, cx + c.x * scale, cy - (i * COIN_THICKNESS * scale), COIN_RADIUS * scale, COIN_THICKNESS * scale, i === bot.rightStack.length - 1);
+    }
+    
+    if (handsVisible && bot.handState.active && bot.state === 'stacking') {
+      const hand = bot.handState;
+      const hx = cx + hand.currentX * scale;
+      const hy = cy - (hand.currentY * scale);
+      ctx.font = `${Math.round(44 * (scale / 2.0))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(hand.side === 'left' ? '🖐' : '🤚', hx, hy - 18 * (scale / 2.0));
+      if (hand.carryingCoin) {
+        drawDetailedCoin(ctx, hx, hy, COIN_RADIUS * scale, COIN_THICKNESS * scale, true);
+      }
+    }
+  } else if (bot.state === 'toppled' || bot.state === 'sweeping') {
+    renderFallenAndRollingCoins(bot, cx, cy, floorRadius, scale);
+  }
+}
+
+function renderSideView_TripleStacks(bot, cx, cy, floorRadius, scale) {
+  const lScreenX = cx + bot.tripleLeftBaseX * scale;
+  const mScreenX = cx + bot.tripleMidBaseX * scale;
+  const rScreenX = cx + bot.tripleRightBaseX * scale;
+  
+  ctx.fillStyle = currentFloorColor;
+  ctx.strokeStyle = currentCoinPrimary;
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  ctx.ellipse(lScreenX, cy, COIN_RADIUS * scale, (COIN_RADIUS * scale) * 0.44, 0, 0, Math.PI * 2);
+  ctx.ellipse(mScreenX, cy, COIN_RADIUS * scale, (COIN_RADIUS * scale) * 0.44, 0, 0, Math.PI * 2);
+  ctx.ellipse(rScreenX, cy, COIN_RADIUS * scale, (COIN_RADIUS * scale) * 0.44, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  
+  if (bot.state === 'stacking' || bot.state === 'touched') {
+    for (let i = 0; i < bot.tripleLeftStack.length; i++) {
+      const c = bot.tripleLeftStack[i];
+      drawDetailedCoin(ctx, cx + c.x * scale, cy - (i * COIN_THICKNESS * scale), COIN_RADIUS * scale, COIN_THICKNESS * scale, i === bot.tripleLeftStack.length - 1);
+    }
+    for (let i = 0; i < bot.tripleMidStack.length; i++) {
+      const c = bot.tripleMidStack[i];
+      drawDetailedCoin(ctx, cx + c.x * scale, cy - (i * COIN_THICKNESS * scale), COIN_RADIUS * scale, COIN_THICKNESS * scale, i === bot.tripleMidStack.length - 1);
+    }
+    for (let i = 0; i < bot.tripleRightStack.length; i++) {
+      const c = bot.tripleRightStack[i];
+      drawDetailedCoin(ctx, cx + c.x * scale, cy - (i * COIN_THICKNESS * scale), COIN_RADIUS * scale, COIN_THICKNESS * scale, i === bot.tripleRightStack.length - 1);
+    }
+    
+    if (handsVisible && bot.handState.active && bot.state === 'stacking') {
+      const hand = bot.handState;
+      const hx = cx + hand.currentX * scale;
+      const hy = cy - (hand.currentY * scale);
+      ctx.font = `${Math.round(44 * (scale / 2.0))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(hand.side === 'left' ? '🖐' : '🤚', hx, hy - 18 * (scale / 2.0));
+      if (hand.carryingCoin) {
+        drawDetailedCoin(ctx, hx, hy, COIN_RADIUS * scale, COIN_THICKNESS * scale, true);
+      }
+    }
+  } else if (bot.state === 'toppled' || bot.state === 'sweeping') {
+    renderFallenAndRollingCoins(bot, cx, cy, floorRadius, scale);
+  }
+}
+
+function drawDetailedCoin(ctx, x, y, r, h, isTop) {
+  ctx.save();
+  ctx.fillStyle = currentCoinRim;
+  ctx.beginPath();
+  ctx.ellipse(x, y + h * 0.4, r, r * 0.44, 0, 0, Math.PI);
+  ctx.ellipse(x, y, r, r * 0.44, 0, Math.PI, 0, true);
+  ctx.fill();
+  
+  const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.15, r * 0.1, x, y, r);
+  grad.addColorStop(0, currentCoinHighlight);
+  grad.addColorStop(0.5, currentCoinPrimary);
+  grad.addColorStop(1, currentCoinRim);
+  
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 0.44, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.strokeStyle = isTop ? currentCoinHighlight : currentCoinRim;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.font = `bold ${Math.max(8, r * 0.5)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('◈', x, y);
+  ctx.restore();
+}
+
+// Render fallen coins scattering and rolling to arena center
+function renderFallenAndRollingCoins(bot, cx, cy, floorRadius, scale) {
+  for (let fc of bot.sweepState.fallenCoins) {
+    if (!fc.returned) {
+      ctx.save();
+      ctx.translate(cx + fc.x * scale, cy - (fc.y * scale));
+      ctx.rotate(fc.rot);
+      drawDetailedCoin(ctx, 0, 0, COIN_RADIUS * scale, COIN_THICKNESS * scale, false);
+      ctx.restore();
+    }
+  }
+}
+
+// ============================================================================
+// HIT DETECTION & NAVIGATION
+// ============================================================================
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
+  const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+  
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const maxR = Math.min(w, h) * 0.46;
+  
+  if (navState.level === 0 || navState.level === 1 || navState.level === 2) {
+    const ring = getCircleRingPositions(cx, cy, maxR, 10);
+    for (let i = 0; i < 10; i++) {
+      const pos = ring.positions[i];
+      if (Math.hypot(clickX - pos.x, clickY - pos.y) <= pos.r) {
+        if (navState.level === 0) {
+          navState.selectedMacro = i;
+          zoomTo(1);
+        } else if (navState.level === 1) {
+          navState.selectedSector = i;
+          zoomTo(2);
+        } else if (navState.level === 2) {
+          navState.selectedBot = i;
+          zoomTo(3);
+        }
+        return;
+      }
+    }
+  } else if (navState.level === 3) {
+    zoomTo(2);
+  }
+});
+
+function zoomTo(level) {
+  navState.level = level;
+  updateBreadcrumbs();
+}
+
+function zoomOut() {
+  if (navState.level > 0) zoomTo(navState.level - 1);
+}
+
+function followBestBot() {
+  followBest = !followBest;
+  const btn = document.getElementById('btnFollowBest');
+  if (followBest) {
+    btn.style.background = currentCoinPrimary;
+    btn.style.color = '#fff';
+    btn.innerHTML = '&#x2705; Following Leader';
+    zoomTo(3);
+  } else {
+    btn.style.background = '#1a2032';
+    btn.style.color = 'var(--text)';
+    btn.innerHTML = '&#x1F3AF; Auto-Follow';
+  }
+}
+
+function resetAllArenas() {
+  for (let b of BOTS) {
+    b.state = 'stacking';
+    b.coins = [{ x: 0, y: 0, r: COIN_RADIUS }];
+    b.leftStack = [{ x: b.leftBaseX, y: 0, r: COIN_RADIUS }];
+    b.rightStack = [{ x: b.rightBaseX, y: 0, r: COIN_RADIUS }];
+    b.tripleLeftStack = [{ x: b.tripleLeftBaseX, y: 0, r: COIN_RADIUS }];
+    b.tripleMidStack = [{ x: b.tripleMidBaseX, y: 0, r: COIN_RADIUS }];
+    b.tripleRightStack = [{ x: b.tripleRightBaseX, y: 0, r: COIN_RADIUS }];
+    b.nextTwinHand = 'left';
+    b.nextTripleStack = 0;
+    b.handState.active = false;
+    b.sweepState.fallenCoins = [];
+    b.currentReach = 0;
+    b.currentTwinHeight = 0;
+    b.currentTripleHeight = 0;
+  }
+}
+
+function changeSpeed(val) { simSpeed = parseFloat(val) || 1; }
+
+function updateBreadcrumbs() {
+  const trail = document.getElementById('breadcrumbTrail');
+  let html = `<button class="crumb-btn ${navState.level === 0 ? 'active' : ''}" onclick="zoomTo(0)">&#x1F3DF; Top Level Ring</button>`;
+  
+  if (navState.level >= 1) {
+    html += `<span class="crumb-sep">&gt;</span><button class="crumb-btn ${navState.level === 1 ? 'active' : ''}" onclick="zoomTo(1)">Sector Ring</button>`;
+  }
+  if (navState.level >= 2) {
+    html += `<span class="crumb-sep">&gt;</span><button class="crumb-btn ${navState.level === 2 ? 'active' : ''}" onclick="zoomTo(2)">Micro Ring (Top-Down)</button>`;
+  }
+  if (navState.level >= 3) {
+    html += `<span class="crumb-sep">&gt;</span><button class="crumb-btn active" onclick="zoomTo(3)">Side View Auto-Zoom</button>`;
+  }
+  
+  trail.innerHTML = html;
+}
+
+// ============================================================================
+// STATS & TELEMETRY UI UPDATE
+// ============================================================================
+
+function updateStatsUI() {
+  if (currentGameMode === 'sideways') {
+    document.getElementById('statRecord1').innerText = `${globalRecordReach.toFixed(2)} mm`;
+    document.getElementById('statRecord2').innerText = `${globalRecordCoins}`;
+  } else if (currentGameMode === 'twin') {
+    document.getElementById('statRecord1').innerText = `${globalRecordTwinHeight.toFixed(0)} mm`;
+    document.getElementById('statRecord2').innerText = `${globalTotalTouches}`;
+  } else {
+    document.getElementById('statRecord1').innerText = `${globalRecordTripleHeight.toFixed(0)} mm`;
+    document.getElementById('statRecord2').innerText = `${globalTotalTouches}`;
+  }
+  document.getElementById('statTotalCoins').innerText = `${globalTotalCoins.toLocaleString()}`;
+  document.getElementById('statReturnedCoins').innerText = `${globalTotalReturnedCoins.toLocaleString()}`;
+  document.getElementById('statTotalFalls').innerText = `${globalTotalFalls.toLocaleString()}`;
+  
+  // Update Live Telemetry Box Above View Window
+  const m = navState.selectedMacro;
+  const s = navState.selectedSector;
+  const b = navState.selectedBot;
+  
+  document.getElementById('telemetryBotId').innerText = `Macro Arena #${m + 1} | Sector #${s + 1} | Bot Ring #${b + 1}`;
+  
+  const bot = BOTS.find(item => item.macro === m && item.sector === s && item.micro === b) || BOTS[0];
+  
+  if (currentGameMode === 'sideways') {
+    document.getElementById('boxValPrimary').innerText = `${bot.currentReach.toFixed(2)} mm`;
+    document.getElementById('boxValCoins').innerText = `${bot.coins.length} Coins`;
+  } else if (currentGameMode === 'twin') {
+    document.getElementById('boxValPrimary').innerText = `${bot.currentTwinHeight.toFixed(0)} mm`;
+    document.getElementById('boxValCoins').innerText = `${bot.leftStack.length + bot.rightStack.length} Coins`;
+  } else {
+    document.getElementById('boxValPrimary').innerText = `${bot.currentTripleHeight.toFixed(0)} mm`;
+    document.getElementById('boxValCoins').innerText = `${bot.tripleLeftStack.length + bot.tripleMidStack.length + bot.tripleRightStack.length} Coins`;
+  }
+  
+  document.getElementById('boxValStatus').innerText = bot.state.toUpperCase();
+  if (bot.state === 'stacking') {
+    document.getElementById('boxValStatus').style.color = '#34d399';
+  } else if (bot.state === 'touched') {
+    document.getElementById('boxValStatus').style.color = '#fbbf24';
+  } else {
+    document.getElementById('boxValStatus').style.color = '#f87171';
+  }
+}
+
+// ============================================================================
+// MAIN LOOP
+// ============================================================================
+
+let lastUiTick = 0;
+
+function mainLoop(timestamp) {
+  updateSimulation();
+  render();
+  
+  if (timestamp - lastUiTick > 250) {
+    updateStatsUI();
+    lastUiTick = timestamp;
+  }
+  
+  requestAnimationFrame(mainLoop);
+}
+
+updateBreadcrumbs();
+requestAnimationFrame(mainLoop);
+
+if (window.bankr) {
+  window.bankr.on('ready', () => {
+    console.log('Bankr SDK ready in CAPhet Bot Arena');
+  });
+}
+</script>
+</body>
+</html>
