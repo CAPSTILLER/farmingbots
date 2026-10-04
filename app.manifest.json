@@ -1,0 +1,19 @@
+{
+  "slug": "caphet-bot-arena",
+  "title": "CAPhet AI Bot Arena - 1,000-Bot Cantilever Stacking",
+  "description": "Visual spectator arena & simulation engine for 1,000 AI bots in a 10x10x10 nested circular ring hierarchy. Features tight non-overlapping ring layouts, hands 🖐🤚 placing red coins on white decks, and edge-to-edge cantilever measurement on side view.",
+  "permissions": [
+    "read:appdata",
+    "write:appdata",
+    "fetch:http"
+  ],
+  "scripts": [
+    "getGameState"
+  ],
+  "visibility": "public",
+  "version": 8,
+  "urls": {
+    "private": "https://bankr.bot/apps/caphet-bot-arena",
+    "public": "https://bankr.bot/u/0x604b2e24df58ef019312b8367af763a7f156bf08/apps/caphet-bot-arena"
+  }
+}
